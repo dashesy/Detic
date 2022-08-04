@@ -110,7 +110,7 @@ class DeticCascadeROIHeads(CascadeROIHeads):
                     proposals = self._match_and_label_boxes(
                         proposals, k, targets)
             predictions = self._run_stage(features, proposals, k, 
-                classifier_info=classifier_info)
+                classifier_info=classifier_info, training=self.training)
             prev_pred_boxes = self.box_predictor[k].predict_boxes(
                 (predictions[0], predictions[1]), proposals)
             head_outputs.append((self.box_predictor[k], predictions, proposals))
@@ -253,13 +253,14 @@ class DeticCascadeROIHeads(CascadeROIHeads):
 
 
     def _run_stage(self, features, proposals, stage, \
-        classifier_info=(None,None,None)):
+        classifier_info=(None,None,None), training=False):
         """
         Support classifier_info and add_feature_to_prop
         """
         pool_boxes = [x.proposal_boxes for x in proposals]
         box_features = self.box_pooler(features, pool_boxes)
-        box_features = _ScaleGradient.apply(box_features, 1.0 / self.num_cascade_stages)
+        if training:
+            box_features = _ScaleGradient.apply(box_features, 1.0 / self.num_cascade_stages)
         box_features = self.box_head[stage](box_features)
         if self.add_feature_to_prop:
             feats_per_image = box_features.split(
