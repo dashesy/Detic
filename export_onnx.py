@@ -58,7 +58,7 @@ if predictor.input_format == "RGB":
     image = image[:, :, ::-1]
 height, width = image.shape[:2]
 image_byte = predictor.aug.get_transform(image).apply_image(image).transpose(2, 0, 1)
-image_byte = torch.as_tensor(image_byte).cuda()
+image_byte = torch.as_tensor(image_byte).unsqueeze(0).cuda()
 
 class FasterRCNN(nn.Module):
     """Wrap FasterRCNN and return tensors
@@ -68,6 +68,9 @@ class FasterRCNN(nn.Module):
         self.model = net
 
     def forward(self, x, height, width):
+        if x.dim() != 3:
+            assert x.shape[0] == 1 and x.dim() == 4
+            x = x.squeeze(0)
         inputs = {"image": x.float(), "height": height, "width": width}
         predictions = self.model([inputs])[0]
         instances = predictions['instances']
@@ -79,14 +82,14 @@ boxes, scores, labels = m(image_byte, height, width)
 
 onnxfile = "/repos/output/detic.onnx"
 targets = ["bbox", "scores", "labels"]
-dynamic_axes = {'image': {1 : 'height', 2: 'width'}}
+dynamic_axes = {'image': {2 : 'height', 3: 'width'}}
 dynamic_axes.update({t: {0: 'i'} for t in targets})
 torch.onnx.export(m, (image_byte, height, width), onnxfile,
                   verbose=True,
                   input_names=['image', 'height', 'width'],
                   dynamic_axes=dynamic_axes,
                   output_names=targets,
-                  opset_version=14)
+                  opset_version=16)
 
 def optimize_graph(onnxfile, onnxfile_optimized=None, providers=None):
     if providers is None:
