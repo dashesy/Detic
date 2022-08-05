@@ -76,7 +76,7 @@ class FasterRCNN(nn.Module):
 m = FasterRCNN(predictor.model)
 
 boxes, scores, labels = m(image_byte, height, width)
-gg
+
 onnxfile = "/repos/output/detic.onnx"
 targets = ["bbox", "scores", "labels"]
 dynamic_axes = {'image': {1 : 'height', 2: 'width'}}
