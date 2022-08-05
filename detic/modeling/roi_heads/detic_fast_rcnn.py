@@ -323,11 +323,13 @@ class DeticFastRCNNOutputLayers(FastRCNNOutputLayers):
         """
         # scores, _ = predictions
         scores = predictions[0]
-        num_inst_per_image = [len(p) for p in proposals]
         if self.use_sigmoid_ce:
             probs = scores.sigmoid()
         else:
             probs = F.softmax(scores, dim=-1)
+        if len(proposals) == 1:
+            return (probs,)
+        num_inst_per_image = [len(p) for p in proposals]
         return probs.split(num_inst_per_image, dim=0)
 
 
