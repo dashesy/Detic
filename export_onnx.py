@@ -1,6 +1,6 @@
 import sys
 import cv2
-import tempfile
+import time
 from pathlib import Path
 import torch
 import torch.nn as nn
@@ -102,3 +102,16 @@ def optimize_graph(onnxfile, onnxfile_optimized=None, providers=None):
     return onnxfile_optimized
 
 optimize_graph(onnxfile)
+
+import onnxruntime as rt
+
+onnxfile_optimized =  onnxfile[:-5] + "_optimized.onnx"
+# sess = rt.InferenceSession(onnxfile, providers=['CPUExecutionProvider'])
+sess = rt.InferenceSession(onnxfile, providers=['CUDAExecutionProvider'])
+t0 = time.time()
+results = sess.run(targets, {
+    'image': image_byte.cpu().numpy(),
+    'height': torch.as_tensor(height).numpy(),
+    'width': torch.as_tensor(width).numpy(),
+})
+print(time.time() - t0)
