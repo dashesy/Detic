@@ -74,7 +74,7 @@ class FasterRCNN(nn.Module):
         inputs = {"image": x.float(), "height": height, "width": width}
         predictions = self.model([inputs])[0]
         instances = predictions['instances']
-        return instances.pred_boxes.tensor, instances.scores, instances.pred_classes
+        return instances.pred_boxes.tensor.floor().int(), instances.scores, instances.pred_classes.int()
 
 m = FasterRCNN(predictor.model)
 
