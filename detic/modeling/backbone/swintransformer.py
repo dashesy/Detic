@@ -372,7 +372,7 @@ class BasicLayer(nn.Module):
         # Wp = int(np.ceil(W / self.window_size)) * self.window_size
         Hp = (H + self.window_size - 1) // self.window_size * self.window_size
         Wp = (W + self.window_size - 1) // self.window_size * self.window_size
-        print(f"BasicLayer {Hp},{Wp} {H} {W}")
+        # print(f"BasicLayer {Hp},{Wp} {H} {W}")
         img_mask = torch.zeros((1, Hp, Wp, 1), device=x.device)  # 1 Hp Wp 1
         h_slices = (slice(0, -self.window_size),
                     slice(-self.window_size, -self.shift_size),

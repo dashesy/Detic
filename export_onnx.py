@@ -60,6 +60,15 @@ height, width = image.shape[:2]
 image_byte = predictor.aug.get_transform(image).apply_image(image).transpose(2, 0, 1)
 image_byte = torch.as_tensor(image_byte).unsqueeze(0).cuda()
 
+image2 = "bigben.jpg"
+image2 = cv2.imread(image2)
+if predictor.input_format == "RGB":
+    # whether the model expects BGR inputs or RGB
+    image2 = image2[:, :, ::-1]
+height2, width2 = image2.shape[:2]
+image2_byte = predictor.aug.get_transform(image2).apply_image(image2).transpose(2, 0, 1)
+image2_byte = torch.as_tensor(image2_byte).unsqueeze(0).cuda()
+
 class FasterRCNN(nn.Module):
     """Wrap FasterRCNN and return tensors
     """
@@ -89,7 +98,7 @@ torch.onnx.export(m, (image_byte, height, width), onnxfile,
                   input_names=['image', 'height', 'width'],
                   dynamic_axes=dynamic_axes,
                   output_names=targets,
-                  opset_version=14)
+                  opset_version=11)
 
 def optimize_graph(onnxfile, onnxfile_optimized=None, providers=None):
     if providers is None:
@@ -119,14 +128,6 @@ results = sess.run(targets, {
 })
 print(time.time() - t0)
 
-image2 = "bigben.jpg"
-image2 = cv2.imread(image2)
-if predictor.input_format == "RGB":
-    # whether the model expects BGR inputs or RGB
-    image2 = image2[:, :, ::-1]
-height2, width2 = image2.shape[:2]
-image2_byte = predictor.aug.get_transform(image2).apply_image(image2).transpose(2, 0, 1)
-image2_byte = torch.as_tensor(image2_byte).unsqueeze(0).cuda()
 t0 = time.time()
 results2 = sess.run(targets, {
     'image': image2_byte.cpu().numpy(),
